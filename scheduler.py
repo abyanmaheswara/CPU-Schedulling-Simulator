@@ -3,26 +3,26 @@
 class Process:
 
     def __init__(self, pid, arrival_time, burst_time, priority=0):
-
+        """
+        Inisialisasi objek Process dengan atribut-atribut dasar.
+        pid: ID unik proses
+        arrival_time: Waktu kedatangan proses
+        burst_time: Waktu eksekusi yang dibutuhkan
+        priority: Prioritas proses (lebih rendah lebih tinggi prioritas)
+        """
         self.pid = pid
-
         self.arrival_time = arrival_time
-
         self.burst_time = burst_time
-        self.priority = priority # Assign priority here
+        self.priority = priority  # Tetapkan prioritas di sini
 
-        self.start_time = 0  # First time the process starts
+        self.start_time = 0  # Waktu pertama proses mulai dieksekusi
+        self.completion_time = 0  # Waktu penyelesaian proses
+        self.turnaround_time = 0  # Waktu turnaround (completion - arrival)
+        self.waiting_time = 0  # Waktu menunggu dalam antrian
 
-        self.completion_time = 0
-
-        self.turnaround_time = 0
-
-        self.waiting_time = 0
-
-        self.remaining_burst_time = burst_time
-
-        self.last_execution_end_time = arrival_time 
-        self.has_started = False
+        self.remaining_burst_time = burst_time  # Waktu burst yang tersisa (untuk Round Robin)
+        self.last_execution_end_time = arrival_time  # Waktu akhir eksekusi terakhir
+        self.has_started = False  # Flag apakah proses sudah mulai dieksekusi
 
     def copy(self):
         return Process(self.pid, self.arrival_time, self.burst_time, self.priority)
@@ -30,42 +30,27 @@ class Process:
 
 
 def fcfs_scheduling(processes):
-
-    # Sort processes by arrival time for FCFS
-
+    """
+    Implementasi algoritma First-Come, First-Served (FCFS).
+    Proses dieksekusi berdasarkan urutan kedatangan.
+    """
+    # Urutkan proses berdasarkan waktu kedatangan untuk FCFS
     processes.sort(key=lambda x: x.arrival_time)
 
-
-
-    current_time = 0
-
-    gantt_chart = []
-
-
+    current_time = 0  # Waktu saat ini dalam simulasi
+    gantt_chart = []  # Daftar untuk menyimpan data Gantt chart
 
     for process in processes:
-
         if current_time < process.arrival_time:
-
-            current_time = process.arrival_time
-
-        
+            current_time = process.arrival_time  # Tunggu sampai proses tiba
 
         process.start_time = current_time
-
         process.completion_time = process.start_time + process.burst_time
-
         process.turnaround_time = process.completion_time - process.arrival_time
-
         process.waiting_time = process.turnaround_time - process.burst_time
 
-
-
         gantt_chart.append((process.pid, current_time, process.completion_time))
-
-        current_time = process.completion_time
-
-    
+        current_time = process.completion_time  # Update waktu saat ini
 
     return processes, gantt_chart
 
@@ -80,6 +65,9 @@ def calculate_average_waiting_time(processes):
 
 
 def display_gantt_chart(gantt_chart):
+    """
+    Menampilkan Gantt chart dalam format teks sederhana.
+    """
     print("\nGantt Chart:")
     # Header
     header = "|"
@@ -88,11 +76,11 @@ def display_gantt_chart(gantt_chart):
         header += f" P{pid} |"
     print(header)
 
-    # Times
-    times = str(gantt_chart[0][1])  # Start time of the first process
+    # Times - Waktu mulai dan akhir untuk setiap proses
+    times = str(gantt_chart[0][1])  # Waktu mulai proses pertama
     for item in gantt_chart:
         pid, start, end = item
-        # Calculate spacing for time
+        # Hitung spasi untuk waktu
         padding = (len(f" P{pid} ") - len(str(end)))
         times += " " * padding + str(end)
     print(times)
@@ -108,95 +96,54 @@ def display_gantt_chart(gantt_chart):
 
 
 def sjf_scheduling(processes):
-
-    processes.sort(key=lambda x: x.arrival_time) # Sort by arrival time initially
-
-    
+    """
+    Implementasi algoritma Shortest Job First (SJF).
+    Proses dengan waktu burst terpendek dieksekusi terlebih dahulu.
+    """
+    processes.sort(key=lambda x: x.arrival_time)  # Urutkan berdasarkan waktu kedatangan awalnya
 
     current_time = 0
-
     completed_processes = []
-
     gantt_chart = []
 
-    
-
     n = len(processes)
-
     is_completed = [False] * n
 
-    
-
     while len(completed_processes) < n:
-
         available_processes = []
-
         for i in range(n):
-
             if processes[i].arrival_time <= current_time and not is_completed[i]:
-
                 available_processes.append(processes[i])
 
-        
-
-        if not available_processes: # No processes available, advance time
-
+        if not available_processes:  # Tidak ada proses tersedia, majukan waktu
             current_time += 1
-
             continue
 
-            
-
-        # Select process with shortest burst time among available
-
+        # Pilih proses dengan waktu burst terpendek di antara yang tersedia
         available_processes.sort(key=lambda x: x.burst_time)
-
         shortest_job = available_processes[0]
 
-        
-
-        # Find index of the shortest job in the original processes list
-
+        # Cari indeks pekerjaan terpendek dalam daftar proses asli
         shortest_job_index = -1
-
         for i in range(n):
-
             if processes[i].pid == shortest_job.pid and not is_completed[i]:
-
                 shortest_job_index = i
-
                 break
-
-
 
         process = processes[shortest_job_index]
 
-        
-
         process.start_time = current_time
-
         process.completion_time = process.start_time + process.burst_time
-
         process.turnaround_time = process.completion_time - process.arrival_time
-
         process.waiting_time = process.turnaround_time - process.burst_time
 
-
-
         gantt_chart.append((process.pid, current_time, process.completion_time))
-
         current_time = process.completion_time
-
         is_completed[shortest_job_index] = True
-
         completed_processes.append(process)
 
-
-
-    # Sort completed processes by PID for consistent output
-
+    # Urutkan proses yang selesai berdasarkan PID untuk output yang konsisten
     completed_processes.sort(key=lambda x: x.pid)
-
     return completed_processes, gantt_chart
 
 
@@ -209,35 +156,15 @@ def round_robin_scheduling(processes, time_quantum):
 
 
 
-    # Create a deep copy of processes to avoid modifying original objects
-
-
-
+    # Buat salinan dalam dari proses untuk menghindari modifikasi objek asli
     processes_copy = [p.copy() for p in processes]
 
-
-
     for p in processes_copy:
-
-
-
         p.remaining_burst_time = p.burst_time
-
-
-
-        # last_execution_end_time tracks when a process last finished an execution burst
-
-
-
-        # This helps in calculating waiting time correctly when it is picked up again.
-
-
-
-        p.last_execution_end_time = p.arrival_time 
-
-
-
-        p.has_started = False # Flag to track if the process has started its first execution
+        # last_execution_end_time melacak kapan proses terakhir menyelesaikan burst eksekusi
+        # Ini membantu menghitung waktu tunggu dengan benar ketika diambil lagi.
+        p.last_execution_end_time = p.arrival_time
+        p.has_started = False  # Flag untuk melacak apakah proses sudah mulai eksekusi pertama
 
 
 
@@ -290,45 +217,15 @@ def round_robin_scheduling(processes, time_quantum):
 
 
     while len(completed_processes) < n:
-
-
-
-        # Add newly arrived processes to the ready queue
-
-
-
+        # Tambahkan proses yang baru tiba ke ready queue
         while process_arrival_index < n and processes_copy[process_arrival_index].arrival_time <= current_time:
-
-
-
             p = processes_copy[process_arrival_index]
-
-
-
             if p.remaining_burst_time > 0 and p not in ready_queue:
-
-
-
                 ready_queue.append(p)
-
-
-
             process_arrival_index += 1
 
-
-
-        
-
-
-
-        if not ready_queue: # CPU is idle
-
-
-
+        if not ready_queue:  # CPU idle
             current_time += 1
-
-
-
             continue
 
 
@@ -377,54 +274,18 @@ def round_robin_scheduling(processes, time_quantum):
 
 
 
-        # Calculate waiting time for this segment
-
-
-
-        # Waiting time is accumulated only when the process is in the ready queue
-
-
-
-        # and current_time is greater than its last_execution_end_time (when it last finished execution or arrived).
-
-
-
+        # Hitung waktu tunggu untuk segmen ini
+        # Waktu tunggu hanya terakumulasi ketika proses dalam ready queue
+        # dan current_time lebih besar dari last_execution_end_time (ketika terakhir selesai eksekusi atau tiba).
         if current_process.last_execution_end_time != -1:
-
-
-
             current_process.waiting_time += (current_time - current_process.last_execution_end_time)
 
-
-
-
-
-
-
-        # Record this segment in Gantt chart
-
-
-
-        # Check if the last entry in gantt_chart is a continuation of the same process
-
-
-
+        # Rekam segmen ini di Gantt chart
+        # Periksa apakah entri terakhir di gantt_chart adalah kelanjutan proses yang sama
         if gantt_chart and gantt_chart[-1][0] == current_process.pid and gantt_chart[-1][2] == current_time:
-
-
-
-            # Extend the previous segment if it's a continuous execution
-
-
-
+            # Perpanjang segmen sebelumnya jika eksekusi berkelanjutan
             gantt_chart[-1] = (current_process.pid, gantt_chart[-1][1], current_time + execute_time)
-
-
-
         else:
-
-
-
             gantt_chart.append((current_process.pid, current_time, current_time + execute_time))
 
 
@@ -518,7 +379,11 @@ def round_robin_scheduling(processes, time_quantum):
 
 
 def priority_scheduling(processes):
-    # Sort processes by arrival time initially
+    """
+    Implementasi algoritma Priority Scheduling.
+    Proses dengan prioritas tertinggi (angka prioritas terendah) dieksekusi terlebih dahulu.
+    """
+    # Urutkan proses berdasarkan waktu kedatangan awalnya
     processes.sort(key=lambda x: x.arrival_time)
 
     current_time = 0
@@ -533,16 +398,16 @@ def priority_scheduling(processes):
         for i in range(n):
             if processes[i].arrival_time <= current_time and not is_completed[i]:
                 available_processes.append(processes[i])
-        
-        if not available_processes: # No processes available, advance time
+
+        if not available_processes:  # Tidak ada proses tersedia, majukan waktu
             current_time += 1
             continue
-            
-        # Select process with highest priority (lowest priority number) among available
+
+        # Pilih proses dengan prioritas tertinggi (angka prioritas terendah) di antara yang tersedia
         available_processes.sort(key=lambda x: x.priority)
         highest_priority_job = available_processes[0]
-        
-        # Find index of the highest priority job in the original processes list
+
+        # Cari indeks pekerjaan prioritas tertinggi dalam daftar proses asli
         highest_priority_job_index = -1
         for i in range(n):
             if processes[i].pid == highest_priority_job.pid and not is_completed[i]:
@@ -550,7 +415,7 @@ def priority_scheduling(processes):
                 break
 
         process = processes[highest_priority_job_index]
-        
+
         process.start_time = current_time
         process.completion_time = process.start_time + process.burst_time
         process.turnaround_time = process.completion_time - process.arrival_time
@@ -561,11 +426,15 @@ def priority_scheduling(processes):
         is_completed[highest_priority_job_index] = True
         completed_processes.append(process)
 
-    # Sort completed processes by PID for consistent output
+    # Urutkan proses yang selesai berdasarkan PID untuk output yang konsisten
     completed_processes.sort(key=lambda x: x.pid)
     return completed_processes, gantt_chart
 
 def get_default_processes():
+    """
+    Membuat daftar proses default untuk demonstrasi.
+    Data: (pid, arrival_time, burst_time, priority)
+    """
     process_data = [
         (1, 0, 5, 2),
         (2, 1, 3, 1),
@@ -575,6 +444,9 @@ def get_default_processes():
     return [Process(p[0], p[1], p[2], p[3]) for p in process_data]
 
 def run_all_schedulers(processes):
+    """
+    Menjalankan semua algoritma penjadwalan dan mengembalikan hasilnya.
+    """
     results = {}
 
     # FCFS
@@ -618,7 +490,7 @@ def run_all_schedulers(processes):
         'gantt_chart': gantt_priority,
         'avg_waiting_time': avg_waiting_priority
     }
-    
+
     return results
 
 def cli_main():
@@ -645,17 +517,17 @@ def cli_main():
     avg_waiting_time_fcfs = calculate_average_waiting_time(scheduled_processes_fcfs)
     print(f"\nAverage Waiting Time: {avg_waiting_time_fcfs:.2f}")
 
-    # SJF Scheduling
+    # Penjadwalan SJF
     print("\n========================================")
     print("SJF Scheduling")
     print("========================================")
-    processes_sjf = [Process(p[0], p[1], p[2], p[3]) for p in process_data] # Re-initialize processes for SJF
+    processes_sjf = [Process(p[0], p[1], p[2], p[3]) for p in process_data]  # Inisialisasi ulang proses untuk SJF
     scheduled_processes_sjf, gantt_chart_sjf = sjf_scheduling(processes_sjf)
 
     print(f"{'PID':<5}{'Arrival':<10}{'Burst':<10}{'Start':<10}{'Completion':<12}{'Turnaround':<12}{'Waiting':<10}")
     for p in scheduled_processes_sjf:
         print(f"{p.pid:<5}{p.arrival_time:<10}{p.burst_time:<10}{p.start_time:<10}{p.completion_time:<12}{p.turnaround_time:<12}{p.waiting_time:<10}")
-    
+
     display_gantt_chart(gantt_chart_sjf)
     avg_waiting_time_sjf = calculate_average_waiting_time(scheduled_processes_sjf)
     print(f"\nAverage Waiting Time: {avg_waiting_time_sjf:.2f}")
@@ -676,11 +548,11 @@ def cli_main():
     avg_waiting_time_rr = calculate_average_waiting_time(scheduled_processes_rr)
     print(f"\nAverage Waiting Time (Time Quantum = {time_quantum}): {avg_waiting_time_rr:.2f}")
 
-    # Priority Scheduling
+    # Penjadwalan Prioritas
     print("\n========================================")
     print("Priority Scheduling")
     print("========================================")
-    processes_priority = [Process(p[0], p[1], p[2], p[3]) for p in process_data] # Re-initialize processes for Priority
+    processes_priority = [Process(p[0], p[1], p[2], p[3]) for p in process_data]  # Inisialisasi ulang proses untuk Prioritas
     scheduled_processes_priority, gantt_chart_priority = priority_scheduling(processes_priority)
 
     print(f"{'PID':<5}{'Arrival':<10}{'Burst':<10}{'Priority':<10}{'Start':<10}{'Completion':<12}{'Turnaround':<12}{'Waiting':<10}")
