@@ -13,8 +13,7 @@
       body {
         font-family: "Roboto", sans-serif;
         padding: 2rem;
-        /* Custom Gradient Background */
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-color: #f8f9fa;
         min-height: 100vh;
         color: #333;
       }
@@ -46,8 +45,75 @@
       }
 
       /* --- Gantt Chart Styling --- */
+      .gantt-container {
+        margin: 1rem 0;
+      }
+
+      .gantt-chart-header {
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+      }
+
+      .gantt-pid-header {
+        width: 60px;
+        text-align: center;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+      }
+
+      .timeline-header-label {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-left: none;
+        min-width: 30px;
+      }
+
+      .gantt-chart {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        overflow: hidden;
+      }
+
+      .gantt-row {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .gantt-row:last-child {
+        border-bottom: none;
+      }
+
+      .task-label {
+        width: 60px;
+        text-align: center;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        border-right: 1px solid #dee2e6;
+        font-weight: bold;
+      }
+
+      .task-bar-container {
+        flex: 1;
+        position: relative;
+        height: 40px;
+        background-color: #ffffff;
+      }
+
       .task-bar {
-        /* Custom CSS untuk visualisasi bar Gantt */
+        position: absolute;
+        height: 30px;
+        top: 5px;
+        border-radius: 4px;
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+        line-height: 30px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         /* ANIMASI Fade In: Memberikan efek visual saat chart dimuat */
         animation: fadeIn 0.5s ease-in-out;
@@ -94,10 +160,10 @@
   </head>
   <body>
     <div class="container">
-      <h1 class="mb-4 text-center">Simulasi Penjadwalan CPU</h1>
+      <h1 class="mb-4 text-center">CPU Scheduling Simulator</h1>
 
       <div class="card mb-4">
-        <div class="card-header"><i class="fas fa-cogs me-2"></i>Konfigurasi Proses</div>
+        <div class="card-header"><i class="fas fa-cogs me-2"></i>Process Configuration</div>
         <div class="card-body">
           <form method="POST" id="process-form">
             <table class="table table-bordered text-center">
@@ -226,39 +292,47 @@
         });
       }
 
-      // 1. Inisialisasi Tooltips saat DOM siap
+      // Inisialisasi semua event listeners saat DOM siap
       document.addEventListener("DOMContentLoaded", function () {
         initializeTooltips();
-      });
 
-      // 2. Fungsi Tombol "Add Process" (Menambah baris baru)
-      document.getElementById("add-row").addEventListener("click", function () {
-        var tableBody = document.getElementById("process-table-body");
-        var newRow = tableBody.insertRow();
-        // Logika untuk menentukan PID berikutnya secara otomatis
-        var lastPid = tableBody.rows.length > 0 ? parseInt(tableBody.rows[tableBody.rows.length - 1].cells[0].querySelector("input").value) : 0;
-
-        // Menambahkan HTML input untuk baris baru
-        newRow.innerHTML = `
-            <td><input type="number" name="pid" class="form-control" value="${lastPid + 1}" required></td>
-            <td><input type="number" name="arrival_time" class="form-control" value="0" required></td>
-            <td><input type="number" name="burst_time" class="form-control" value="1" min="1" required></td>
-            <td><input type="number" name="priority" class="form-control" value="0" required></td>
-            <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash me-1"></i>Remove</button></td>
-            `;
-      });
-
-      // 3. Fungsi Tombol "Remove" (Menghapus baris)
-      document.getElementById("process-table-body").addEventListener("click", function (e) {
-        if (e.target && e.target.classList.contains("remove-row")) {
-          var row = e.target.closest("tr");
-          // Aturan: minimal satu baris proses harus ada
-          if (document.getElementById("process-table-body").rows.length > 1) {
-            row.parentNode.removeChild(row);
-          } else {
-            alert("At least one process is required.");
+        // 2. Fungsi Tombol "Add Process" (Menambah baris baru)
+        document.getElementById("add-row").addEventListener("click", function () {
+          var tableBody = document.getElementById("process-table-body");
+          // Logika untuk menentukan PID berikutnya secara otomatis dengan mencari PID maksimum
+          var maxPid = 0;
+          for (var i = 0; i < tableBody.rows.length; i++) {
+            var pidInput = tableBody.rows[i].cells[0].querySelector("input");
+            var pidValue = parseInt(pidInput.value);
+            if (!isNaN(pidValue) && pidValue > maxPid) {
+              maxPid = pidValue;
+            }
           }
-        }
+          var nextPid = maxPid + 1;
+
+          var newRow = tableBody.insertRow();
+          // Menambahkan HTML input untuk baris baru
+          newRow.innerHTML = `
+              <td><input type="number" name="pid" class="form-control" value="${nextPid}" required></td>
+              <td><input type="number" name="arrival_time" class="form-control" value="0" required></td>
+              <td><input type="number" name="burst_time" class="form-control" value="1" min="1" required></td>
+              <td><input type="number" name="priority" class="form-control" value="0" required></td>
+              <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash me-1"></i>Remove</button></td>
+              `;
+        });
+
+        // 3. Fungsi Tombol "Remove" (Menghapus baris)
+        document.getElementById("process-table-body").addEventListener("click", function (e) {
+          if (e.target && e.target.classList.contains("remove-row")) {
+            var row = e.target.closest("tr");
+            // Aturan: minimal satu baris proses harus ada
+            if (document.getElementById("process-table-body").rows.length > 1) {
+              row.parentNode.removeChild(row);
+            } else {
+              alert("At least one process is required.");
+            }
+          }
+        });
       });
     </script>
   </body>
